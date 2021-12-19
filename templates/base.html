@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>My app</title>
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet" />
+    <script lang="javascript">
+      {{ inertia.include_router() }}
+    </script>
+  </head>
+  <body>
+    <div id="app" data-page='{{ page | tojson }}'></div>
+    <script src="{{ url_for('static', filename='js/chunk-vendors.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  </body>
+</html>

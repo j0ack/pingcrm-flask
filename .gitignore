@@ -1,0 +1,9 @@
+*.py[cod]
+__pycache__/
+venv/
+
+app/media/*
+app/test.db
+
+static/dist/
+static/vue/node_modules/
