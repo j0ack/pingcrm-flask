@@ -1,20 +1,18 @@
-import { createApp, h } from 'vue'
+import { createApp, h, App } from 'vue'
 import { createInertiaApp } from '@inertiajs/inertia-vue3'
 import '@/css/app.css'
 
-const container = document.getElementById('app')
-if (!container) {
-  throw 'Main container not found'
-}
+type StrOrNum = string | number
 
-const pageData = (container.dataset || {}).page
-if (!pageData) {
-  throw 'No dataset page found in root container'
+declare global {
+  interface Window {
+    reverseUrl(urlName: string, args?: Record<string, unknown> | StrOrNum | StrOrNum[]): string
+  }
 }
 
 const routeConfig = {
-  install: (app: any, options: any) => {
-    app.config.globalProperties.$route = (window as any).reverseUrl
+  install: (app: App, _options: Record<string, unknown>) => {
+    app.config.globalProperties.$route = window.reverseUrl
   }
 }
 
@@ -24,9 +22,9 @@ createInertiaApp({
     return page.default
   },
   setup({ el, app, props, plugin }) {
-    createApp({ render: () => h(app, props) })
-      .use(plugin)
-      .use(routeConfig)
-      .mount(container)
+    const vueApp = createApp({ render: () => h(app, props) })
+    vueApp.use(plugin)
+    vueApp.use(routeConfig)
+    vueApp.mount(el)
   }
 })
