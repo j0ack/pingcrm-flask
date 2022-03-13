@@ -2,6 +2,8 @@
 
 import os
 from datetime import datetime
+from io import BytesIO
+from typing import Dict
 from uuid import uuid4
 
 from flask import Blueprint, current_app, flash, redirect, request, url_for
@@ -18,6 +20,14 @@ from app.serializers import user_schema, users_schema
 user_routes = Blueprint("users", __name__)
 
 
+def save_media(files: Dict[str, BytesIO]) -> str:
+    file_ = request.files["photo"]
+    ext = file_.filename.split(".")[-1]
+    filename = f"{uuid4().hex}.{ext}"
+    file_.save(os.path.join(current_app.config["MEDIA_DIR"], filename))
+    return url_for("media", filename=filename)
+
+
 @user_routes.route("/")
 @login_required
 def search():
@@ -26,9 +36,9 @@ def search():
     query = User.query.filter(User.last_name.ilike(f"%{name_filter}%"))
 
     if trash_filter == "only":
-        query = query.filter(User.deleted_at == None)  # noqa: E711
-    elif trash_filter is None:
         query = query.filter(User.deleted_at != None)  # noqa: E711
+    elif trash_filter == "":
+        query = query.filter(User.deleted_at == None)  # noqa: E711
 
     if owner_filter is not None:
         arg = owner_filter == "owner"
@@ -53,6 +63,11 @@ def create():
             user = user_schema.load(request_data)
             account = Account(name=f"{user.last_name} {user.first_name}")
             user.account = account
+
+            if "photo" in request.files:
+                photo_path = save_media(request.files)
+                user.photo_path = photo_path
+
             db.session.add(account)
             db.session.add(user)
             db.session.commit()
@@ -82,11 +97,8 @@ def edit(user_id: int):
                 user.set_password(pwd)
 
             if "photo" in request.files:
-                file_ = request.files["photo"]
-                ext = file_.filename.split(".")[-1]
-                filename = f"{uuid4().hex}.{ext}"
-                file_.save(os.path.join(current_app.config["MEDIA_DIR"], filename))
-                user.photo_path = url_for("media", filename=filename)
+                photo_path = save_media(request.files)
+                user.photo_path = photo_path
 
             db.session.commit()
             flash("User updated.", "success")
