@@ -12,6 +12,7 @@ class TestUserViews(PingCrmTestCase):
         super().setUp()
         with self.app.test_request_context():
             self.user = User(
+                id=1,
                 first_name="john",
                 last_name="doe",
                 owner=True,
@@ -22,6 +23,7 @@ class TestUserViews(PingCrmTestCase):
             self.user.account = self.account
 
             self.second_user = User(
+                id=2,
                 first_name="jane",
                 last_name="doe",
                 owner=False,
@@ -166,3 +168,109 @@ class TestUserViews(PingCrmTestCase):
             data = self.get_response_data(response.data)
             self.assertIn("password", data["props"]["errors"])
             self.assertEqual(User.query.count(), 2)
+
+    def test_edit(self):
+        with self.app.test_request_context():
+            response = self.client.put(
+                "/users/1/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "first_name": "Test 1",
+                    "last_name": "Test 2",
+                    "email": "test@test.com",
+                },
+            )
+            data = self.get_response_data(response.data)
+            self.assertEqual(data["props"]["user"]["first_name"], "Test 1")
+            self.assertEqual(data["props"]["user"]["last_name"], "Test 2")
+            self.assertEqual(data["props"]["user"]["email"], "test@test.com")
+            self.assertNotIn("password", data["props"]["user"])
+
+    def test_edit_password(self):
+        with self.app.test_request_context():
+            response = self.client.put(
+                "/users/1/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "password": "foobar",
+                },
+            )
+            data = self.get_response_data(response.data)
+            user = User.query.get(data["props"]["user"]["id"])
+            self.assertTrue(user.check_password("foobar"))
+
+    def test_edit_add_photo(self):
+        with self.app.test_request_context():
+            response = self.client.put(
+                "/users/1/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "photo": (BytesIO(b"abcdef"), "test.jpg"),
+                },
+            )
+            data = self.get_response_data(response.data)
+            user = User.query.get(data["props"]["user"]["id"])
+            self.assertIsNotNone(user.photo_path)
+            self.assertTrue(user.check_password("test"))
+
+    def test_edit_missing_fields(self):
+        with self.app.test_request_context():
+            response = self.client.put(
+                "/users/1/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "first_name": "",
+                },
+            )
+            data = self.get_response_data(response.data)
+            self.assertIn("first_name", data["props"]["errors"])
+
+            response = self.client.put(
+                "/users/1/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "last_name": "",
+                },
+            )
+            data = self.get_response_data(response.data)
+            self.assertIn("last_name", data["props"]["errors"])
+
+    def test_edit_not_found_user(self):
+        with self.app.test_request_context():
+            response = self.client.put(
+                "/users/9999/edit/",
+                content_type="multipart/form-data",
+                data={
+                    "first_name": "John",
+                },
+            )
+            self.assertEqual(response.status_code, 404)
+
+    def test_restore_user(self):
+        with self.app.test_request_context():
+            response = self.client.put("/users/2/restore/", follow_redirects=True)
+            user = User.query.get(2)
+            data = self.get_response_data(response.data)
+            self.assertIsNone(user.deleted_at)
+            self.assertIsNone(data["props"]["user"]["deleted_at"])
+            self.assertEqual(data["component"], "users/Edit")
+
+    def test_restore_user_not_found(self):
+        with self.app.test_request_context():
+            response = self.client.put("/users/9999/restore/", follow_redirects=True)
+            self.assertEqual(response.status_code, 404)
+
+    def test_delete(self):
+        with self.app.test_request_context():
+            response = self.client.delete("/users/1/delete/", follow_redirects=True)
+            user = User.query.get(2)
+            data = self.get_response_data(response.data)
+            self.assertIsNotNone(user.deleted_at)
+            self.assertIsNotNone(data["props"]["user"]["deleted_at"])
+
+    def test_delete_user_not_found(self):
+        with self.app.test_request_context():
+            response = self.client.delete(
+                "/users/9999/delete/", follow_redirects=True
+            )
+            self.assertEqual(response.status_code, 404)

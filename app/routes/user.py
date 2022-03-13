@@ -58,9 +58,15 @@ def search():
 def create():
     errors = {}
     if request.method == "POST":
-        request_data = request.form
+        request_data = dict(request.form)
+
         try:
+            pwd = request_data.pop("password", None)
+            if pwd is None:
+                raise ValidationError({"password": "This field is required"})
+
             user = user_schema.load(request_data)
+            user.set_password(pwd)
             account = Account(name=f"{user.last_name} {user.first_name}")
             user.account = account
 
@@ -88,7 +94,7 @@ def edit(user_id: int):
     if request.method == "PUT":
         request_data = dict(request.form)
         try:
-            pwd = request_data.pop("password")
+            pwd = request_data.pop("password", None)
             user_schema.load(request_data, partial=True, unknown=EXCLUDE)
             request_data["owner"] = request_data.get("owner", 0) == 1
             user.update(request_data)

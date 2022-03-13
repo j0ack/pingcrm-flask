@@ -119,7 +119,6 @@ class UserSchema(ma.Schema):
             "first_name",
             "last_name",
             "email",
-            "password",
             "photo_path",
             "owner",
             "deleted_at",
@@ -146,13 +145,6 @@ class UserSchema(ma.Schema):
             error="This field is required",
         ),
     )
-    password = fields.String(
-        required=True,
-        validate=validate.Length(
-            min=1,
-            error="This field is required",
-        ),
-    )
 
     @post_load(pass_many=False)
     def make_user(self, data, **kwargs):
@@ -162,8 +154,6 @@ class UserSchema(ma.Schema):
             email=data.get("email"),
             owner=data.get("owner") == 1,
         )
-        if pwd := data.get("password"):
-            user.set_password(pwd)
 
         return user
 
