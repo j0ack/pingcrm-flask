@@ -2,12 +2,11 @@ image: python:3
 stages:
   - tests
 
-
 unit_tests_python:
   stage: tests
   coverage: '/\d+\%\s*$/'
   before_script:
-    - pip install -U -r requireements.txt
+    - pip install -U -r requirements.txt
   script:
     - pip install -U coverage beautifulsoup4
     - coverage run --source=app -m unittest discover tests/backend
