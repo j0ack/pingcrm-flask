@@ -6,6 +6,7 @@ from collections import defaultdict
 from flask import Flask, current_app, get_flashed_messages, send_from_directory
 from flask_inertia import Inertia, render_inertia
 from flask_login import LoginManager, current_user, login_required
+from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
@@ -13,6 +14,7 @@ ROOT_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 db = SQLAlchemy()
+ma = Marshmallow()
 migrate = Migrate()
 inertia = Inertia()
 login_manager = LoginManager()
@@ -68,6 +70,7 @@ def create_app(config_filename: str) -> Flask:
         db,
         render_as_batch=app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"),
     )
+    ma.init_app(app)
     inertia.init_app(app)
     inertia.share("flash", flash_messages)
     inertia.share("auth", auth_data)

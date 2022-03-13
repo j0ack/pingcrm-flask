@@ -21,18 +21,3 @@ class Organization(BaseModel):
 
     account_id = db.Column(db.Integer, db.ForeignKey(Account.id), nullable=False)
     account = db.relationship(Account, backref=db.backref("organizations"))
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email,
-            "phone": self.phone,
-            "address": self.address,
-            "city": self.city,
-            "region": self.region,
-            "country": self.country,
-            "postal_code": self.postal_code,
-            "contacts": [contact.to_dict() for contact in self.contacts],
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else "",
-        }

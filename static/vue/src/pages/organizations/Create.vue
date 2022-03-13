@@ -46,14 +46,14 @@ export default defineComponent({
   data() {
     return {
       form: useForm({
-        name: null,
-        email: null,
-        phone: null,
-        address: null,
-        city: null,
-        region: null,
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        region: '',
         country: null,
-        postal_code: null,
+        postal_code: '',
       }),
     }
   },

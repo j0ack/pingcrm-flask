@@ -5,10 +5,13 @@ from datetime import datetime
 from flask import Blueprint, current_app, flash, redirect, request, url_for
 from flask_inertia import render_inertia
 from flask_login import login_required
+from marshmallow import ValidationError
 
 from app import db
+from app.models.account import Account
 from app.models.organization import Organization
 from app.routes import build_search_data, get_search_filters
+from app.serializers import organization_schema, organizations_schema
 
 organization_routes = Blueprint("organization", __name__)
 
@@ -28,7 +31,12 @@ def search():
         page, per_page=current_app.config["ITEMS_PER_PAGE"]
     )
     data = build_search_data(
-        query, "organizations", "organization.search", name_filter, trash_filter
+        query,
+        "organizations",
+        "organization.search",
+        name_filter,
+        trash_filter,
+        organizations_schema,
     )
     return render_inertia("organizations/Search", props=data)
 
@@ -38,28 +46,21 @@ def search():
 def create():
     errors = {}
     if request.method == "POST":
-
         request_data = request.get_json()
-
-        if not request_data.get("name"):
-            errors["name"] = "The name field is required."
-            flash("There is one form error.", "error")
-        else:
-            organization = Organization(
-                name=request_data.get("name"),
-                email=request_data.get("email"),
-                phone=request_data.get("phone"),
-                city=request_data.get("city"),
-                address=request_data.get("address"),
-                region=request_data.get("region"),
-                country=request_data.get("country"),
-                postal_code=request_data.get("postal_code"),
-            )
+        try:
+            organization = organization_schema.load(request_data)
+            account = Account(name=organization.name)
+            organization.account = account
+            db.session.add(account)
             db.session.add(organization)
-            db.sesion.commit()
+            db.session.commit()
             flash("Organization created.", "success")
+        except ValidationError as err:
+            errors = err.normalized_messages()
+            flash("There is one form error.", "error")
 
-    return render_inertia("organizations/Create")
+    data = {"errors": errors}
+    return render_inertia("organizations/Create", props=data)
 
 
 @organization_routes.route("/<organization_id>/edit/", methods=["GET", "PUT"])
@@ -68,28 +69,20 @@ def edit(organization_id: int):
     errors = {}
     organization = Organization.query.get_or_404(organization_id)
     if request.method == "PUT":
-
         request_data = request.get_json()
-
-        if not request_data.get("name"):
-            errors["name"] = "The name field is required."
-            flash("There is one form error.", "error")
-        else:
-            organization.name = request_data.get("name")
-            organization.email = request_data.get("email")
-            organization.phone = request_data.get("phone")
-            organization.city = request_data.get("city")
-            organization.address = request_data.get("address")
-            organization.region = request_data.get("region")
-            organization.country = request_data.get("country")
-            organization.postal_code = request_data.get("postal_code")
+        try:
+            organization_schema.load(request_data)
+            organization.update(request_data)
             db.session.commit()
             flash("Organization updated.", "success")
+        except ValidationError as err:
+            errors = err.normalized_messages()
+            flash("There is one form error.", "error")
 
     data = {
         "errors": errors,
         "mode": "edit",
-        "organization": organization.to_dict(),
+        "organization": organization_schema.dump(organization),
     }
     return render_inertia("organizations/Edit", props=data)
 
