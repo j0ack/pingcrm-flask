@@ -8,4 +8,3 @@ flask_marshmallow==0.14.0
 factory_boy==3.2.1
 Werkzeug==2.0.0
 coverage==6.3.2
-werkzeug~=2.0.0
