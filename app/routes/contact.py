@@ -24,9 +24,9 @@ def search():
     query = Contact.query.filter(Contact.last_name.ilike(f"%{name_filter}"))
 
     if trash_filter == "only":
-        query = query.filter(Contact.deleted_at == None)  # noqa: E711
-    elif trash_filter is None:
         query = query.filter(Contact.deleted_at != None)  # noqa: E711
+    elif trash_filter == "":
+        query = query.filter(Contact.deleted_at == None)  # noqa: E711
 
     query = query.order_by(Contact.id).paginate(
         page, per_page=current_app.config["ITEMS_PER_PAGE"]
@@ -49,6 +49,7 @@ def create():
         [org for org in Organization.query.all()]
     )
     errors = {}
+    data = {}
     if request.method == "POST":
         request_data = request.get_json()
         try:
@@ -58,15 +59,18 @@ def create():
             db.session.add(account)
             db.session.add(contact)
             db.session.commit()
+            data["contact"] = contact_schema.dump(contact)
             flash("Contact created.", "success")
         except ValidationError as err:
             errors = err.normalized_messages()
             flash("There is one form error.", "error")
 
-    data = {
-        "errors": errors,
-        "organizations": organizations,
-    }
+    data.update(
+        {
+            "errors": errors,
+            "organizations": organizations,
+        }
+    )
 
     return render_inertia("contacts/Create", props=data)
 

@@ -57,6 +57,7 @@ def search():
 @login_required
 def create():
     errors = {}
+    data = {}
     if request.method == "POST":
         request_data = dict(request.form)
 
@@ -77,12 +78,13 @@ def create():
             db.session.add(account)
             db.session.add(user)
             db.session.commit()
+            data["user"] = user_schema.dump(user)
             flash("User created.", "success")
         except ValidationError as err:
             errors = err.normalized_messages()
             flash("There is one form error.", "error")
 
-    data = {"errors": errors}
+    data["errors"] = errors
     return render_inertia("users/Create", props=data)
 
 

@@ -36,9 +36,9 @@ class TestLogin(PingCrmTestCase):
     def test_login_get(self):
         with self.app.test_request_context():
             response = self.client.get("/login/")
-            data = self.get_response_data(response.data)
-            self.assertEqual(data["component"], "Login")
-            self.assertTrue(data["url"].endswith("/login/"))
+            data = response.inertia("app")
+            self.assertEqual(data.component, "Login")
+            self.assertTrue(data.url.endswith("/login/"))
 
     def test_login_successful(self):
         with self.app.test_request_context():
@@ -50,9 +50,9 @@ class TestLogin(PingCrmTestCase):
                 },
                 follow_redirects=True,
             )
-            data = self.get_response_data(response.data)
-            self.assertEqual(data["component"], "Dashboard")
-            self.assertNotEqual({}, data["props"]["auth"])
+            data = response.inertia("app")
+            self.assertEqual(data.component, "Dashboard")
+            self.assertNotEqual({}, data.props.auth)
 
     def test_login_invalid_password(self):
         with self.app.test_request_context():
@@ -64,11 +64,9 @@ class TestLogin(PingCrmTestCase):
                 },
                 follow_redirects=True,
             )
-            data = self.get_response_data(response.data)
-            self.assertIn(
-                "Invalid email or password", data["props"]["flash"]["error"]
-            )
-            self.assertEqual(data["component"], "Login")
+            data = response.inertia("app")
+            self.assertIn("Invalid email or password", data.props.flash.error)
+            self.assertEqual(data.component, "Login")
 
     def test_login_invalid_email(self):
         with self.app.test_request_context():
@@ -79,12 +77,11 @@ class TestLogin(PingCrmTestCase):
                     "password": "test",
                 },
                 follow_redirects=True,
+                headers={"X-Inertia": True},
             )
-            data = self.get_response_data(response.data)
-            self.assertIn(
-                "Invalid email or password", data["props"]["flash"]["error"]
-            )
-            self.assertEqual(data["component"], "Login")
+            data = response.inertia("app")
+            self.assertIn("Invalid email or password", data.props.flash.error)
+            self.assertEqual(data.component, "Login")
 
     def test_logout(self):
         with self.app.test_request_context():
@@ -96,8 +93,8 @@ class TestLogin(PingCrmTestCase):
                 },
                 follow_redirects=True,
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("auth", data["props"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.auth, "user"))
             response = self.client.post("/logout/", follow_redirects=True)
-            data = self.get_response_data(response.data)
-            self.assertEqual({}, data["props"]["auth"])
+            data = response.inertia("app")
+            self.assertFalse(hasattr(data.props.auth, "user"))

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from io import BytesIO
 
@@ -8,6 +9,8 @@ from tests.backend import PingCrmTestCase
 
 
 class TestUserViews(PingCrmTestCase):
+    """Test user related views."""
+
     def setUp(self):
         super().setUp()
         with self.app.test_request_context():
@@ -42,33 +45,33 @@ class TestUserViews(PingCrmTestCase):
 
     def tearDown(self):
         with self.app.test_request_context():
-            db.session.delete(self.account)
-            db.session.delete(self.second_account)
-            db.session.delete(self.user)
-            db.session.delete(self.second_user)
+            User.query.delete()
             db.session.commit()
+
+            for media in os.listdir(self.app.config["MEDIA_DIR"]):
+                os.remove(os.path.join(self.app.config["MEDIA_DIR"], media))
 
     def test_search(self):
         with self.app.test_request_context():
             response = self.client.get("/users/")
-            data = self.get_response_data(response.data)
-            self.assertEqual(len(data["props"]["users"]["data"]), 1)
-            self.assertEqual(data["props"]["users"]["data"][0]["first_name"], "john")
-            self.assertEqual(data["component"], "users/Search")
+            data = response.inertia("app")
+            self.assertEqual(len(data.props.users.data), 1)
+            self.assertEqual(data.props.users.data[0].first_name, "john")
+            self.assertEqual(data.component, "users/Search")
 
             args = {"trashed": "only"}
             response = self.client.get("/users/", query_string=args)
-            data = self.get_response_data(response.data)
-            self.assertEqual(len(data["props"]["users"]["data"]), 1)
-            self.assertEqual(data["props"]["users"]["data"][0]["first_name"], "jane")
-            self.assertEqual(data["component"], "users/Search")
+            data = response.inertia("app")
+            self.assertEqual(len(data.props.users.data), 1)
+            self.assertEqual(data.props.users.data[0].first_name, "jane")
+            self.assertEqual(data.component, "users/Search")
 
             args = {"role": "owner"}
             response = self.client.get("/users/", query_string=args)
-            data = self.get_response_data(response.data)
-            self.assertEqual(len(data["props"]["users"]["data"]), 1)
-            self.assertEqual(data["props"]["users"]["data"][0]["first_name"], "john")
-            self.assertEqual(data["component"], "users/Search")
+            data = response.inertia("app")
+            self.assertEqual(len(data.props.users.data), 1)
+            self.assertEqual(data.props.users.data[0].first_name, "john")
+            self.assertEqual(data.component, "users/Search")
 
     def test_create_user(self):
         with self.app.test_request_context():
@@ -82,15 +85,12 @@ class TestUserViews(PingCrmTestCase):
                     "password": "test",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertEqual(data["props"]["errors"], {})
+            data = response.inertia("app")
             self.assertEqual(User.query.count(), 3)
 
-            user = User.query.filter_by(first_name="Test").first()
+            user = User.query.get(data.props.user.id)
             self.assertTrue(user.check_password("test"))
             self.assertIsNone(user.photo_path)
-            db.session.delete(user)
-            db.session.commit()
 
     def test_create_user_with_photo(self):
         with self.app.test_request_context():
@@ -105,15 +105,12 @@ class TestUserViews(PingCrmTestCase):
                     "photo": (BytesIO(b"abcdef"), "test.jpg"),
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertEqual(data["props"]["errors"], {})
+            data = response.inertia("app")
             self.assertEqual(User.query.count(), 3)
 
-            user = User.query.filter_by(first_name="Test").first()
+            user = User.query.get(data.props.user.id)
             self.assertTrue(user.check_password("test"))
             self.assertIsNotNone(user.photo_path)
-            db.session.delete(user)
-            db.session.commit()
 
     def test_create_missing_fields(self):
         with self.app.test_request_context():
@@ -126,8 +123,8 @@ class TestUserViews(PingCrmTestCase):
                     "password": "test",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("first_name", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "first_name"))
             self.assertEqual(User.query.count(), 2)
 
             response = self.client.post(
@@ -139,8 +136,8 @@ class TestUserViews(PingCrmTestCase):
                     "password": "test",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("last_name", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "last_name"))
             self.assertEqual(User.query.count(), 2)
 
             response = self.client.post(
@@ -152,8 +149,8 @@ class TestUserViews(PingCrmTestCase):
                     "password": "test",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("email", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "email"))
             self.assertEqual(User.query.count(), 2)
 
             response = self.client.post(
@@ -165,8 +162,8 @@ class TestUserViews(PingCrmTestCase):
                     "email": "test@doe.com",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("password", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "password"))
             self.assertEqual(User.query.count(), 2)
 
     def test_edit(self):
@@ -180,11 +177,11 @@ class TestUserViews(PingCrmTestCase):
                     "email": "test@test.com",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertEqual(data["props"]["user"]["first_name"], "Test 1")
-            self.assertEqual(data["props"]["user"]["last_name"], "Test 2")
-            self.assertEqual(data["props"]["user"]["email"], "test@test.com")
-            self.assertNotIn("password", data["props"]["user"])
+            data = response.inertia("app")
+            self.assertEqual(data.props.user.first_name, "Test 1")
+            self.assertEqual(data.props.user.last_name, "Test 2")
+            self.assertEqual(data.props.user.email, "test@test.com")
+            self.assertFalse(hasattr(data.props.user, "password"))
 
     def test_edit_password(self):
         with self.app.test_request_context():
@@ -195,8 +192,8 @@ class TestUserViews(PingCrmTestCase):
                     "password": "foobar",
                 },
             )
-            data = self.get_response_data(response.data)
-            user = User.query.get(data["props"]["user"]["id"])
+            data = response.inertia("app")
+            user = User.query.get(data.props.user.id)
             self.assertTrue(user.check_password("foobar"))
 
     def test_edit_add_photo(self):
@@ -208,8 +205,8 @@ class TestUserViews(PingCrmTestCase):
                     "photo": (BytesIO(b"abcdef"), "test.jpg"),
                 },
             )
-            data = self.get_response_data(response.data)
-            user = User.query.get(data["props"]["user"]["id"])
+            data = response.inertia("app")
+            user = User.query.get(data.props.user.id)
             self.assertIsNotNone(user.photo_path)
             self.assertTrue(user.check_password("test"))
 
@@ -222,8 +219,8 @@ class TestUserViews(PingCrmTestCase):
                     "first_name": "",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("first_name", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "first_name"))
 
             response = self.client.put(
                 "/users/1/edit/",
@@ -232,8 +229,8 @@ class TestUserViews(PingCrmTestCase):
                     "last_name": "",
                 },
             )
-            data = self.get_response_data(response.data)
-            self.assertIn("last_name", data["props"]["errors"])
+            data = response.inertia("app")
+            self.assertTrue(hasattr(data.props.errors, "last_name"))
 
     def test_edit_not_found_user(self):
         with self.app.test_request_context():
@@ -250,10 +247,10 @@ class TestUserViews(PingCrmTestCase):
         with self.app.test_request_context():
             response = self.client.put("/users/2/restore/", follow_redirects=True)
             user = User.query.get(2)
-            data = self.get_response_data(response.data)
+            data = response.inertia("app")
             self.assertIsNone(user.deleted_at)
-            self.assertIsNone(data["props"]["user"]["deleted_at"])
-            self.assertEqual(data["component"], "users/Edit")
+            self.assertIsNone(data.props.user.deleted_at)
+            self.assertEqual(data.component, "users/Edit")
 
     def test_restore_user_not_found(self):
         with self.app.test_request_context():
@@ -264,9 +261,9 @@ class TestUserViews(PingCrmTestCase):
         with self.app.test_request_context():
             response = self.client.delete("/users/1/delete/", follow_redirects=True)
             user = User.query.get(2)
-            data = self.get_response_data(response.data)
+            data = response.inertia("app")
             self.assertIsNotNone(user.deleted_at)
-            self.assertIsNotNone(data["props"]["user"]["deleted_at"])
+            self.assertIsNotNone(data.props.user.deleted_at)
 
     def test_delete_user_not_found(self):
         with self.app.test_request_context():

@@ -23,9 +23,9 @@ def search():
     query = Organization.query.filter(Organization.name.ilike(f"%{name_filter}%"))
 
     if trash_filter == "only":
-        query = query.filter(Organization.deleted_at == None)  # noqa: E711
-    elif trash_filter is None:
         query = query.filter(Organization.deleted_at != None)  # noqa: E711
+    elif trash_filter == "":
+        query = query.filter(Organization.deleted_at == None)  # noqa: E711
 
     query = query.order_by(Organization.id).paginate(
         page, per_page=current_app.config["ITEMS_PER_PAGE"]
@@ -45,6 +45,7 @@ def search():
 @login_required
 def create():
     errors = {}
+    data = {}
     if request.method == "POST":
         request_data = request.get_json()
         try:
@@ -54,12 +55,13 @@ def create():
             db.session.add(account)
             db.session.add(organization)
             db.session.commit()
+            data["organization"] = organization_schema.dump(organization)
             flash("Organization created.", "success")
         except ValidationError as err:
             errors = err.normalized_messages()
             flash("There is one form error.", "error")
 
-    data = {"errors": errors}
+    data["errors"] = errors
     return render_inertia("organizations/Create", props=data)
 
 

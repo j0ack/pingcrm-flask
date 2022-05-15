@@ -90,9 +90,7 @@ class OrganizationSchema(ma.Schema):
             error="This field is required",
         ),
     )
-    contacts = ma.Nested(
-        "ContactSchema", many=True, metadata={"exclude": ["organization"]}
-    )
+    contacts = ma.Nested("ContactSchema", many=True, exclude=["organization"])
 
     @post_load(pass_many=False)
     def make_organization(self, data: Dict[str, Any], **kwargs) -> Organization:
