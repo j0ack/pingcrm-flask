@@ -6,6 +6,6 @@ unit_tests_python:
   stage: tests
   coverage: '/\d+\%\s*$/'
   before_script:
-    - pip install -U -r requirements.txt
+    - pip install -r requirements.txt
   script:
     - make test-python
