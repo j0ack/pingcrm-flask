@@ -12,7 +12,7 @@
           <text-input v-model="form.first_name" :error="form.errors.first_name" class="pb-8 pr-6 w-full lg:w-1/2" label="First name" />
           <text-input v-model="form.last_name" :error="form.errors.last_name" class="pb-8 pr-6 w-full lg:w-1/2" label="Last name" />
           <select-input v-model="form.organization_id" :error="form.errors.organization_id" class="pb-8 pr-6 w-full lg:w-1/2" label="Organization">
-            <option :value="null" />
+            <option value=""></option>
             <option v-for="organization in organizations" :key="organization.id" :value="organization.id">{{ organization.name }}</option>
           </select-input>
           <text-input v-model="form.email" :error="form.errors.email" class="pb-8 pr-6 w-full lg:w-1/2" label="Email" />
@@ -21,7 +21,7 @@
           <text-input v-model="form.city" :error="form.errors.city" class="pb-8 pr-6 w-full lg:w-1/2" label="City" />
           <text-input v-model="form.region" :error="form.errors.region" class="pb-8 pr-6 w-full lg:w-1/2" label="Province/State" />
           <select-input v-model="form.country" :error="form.errors.country" class="pb-8 pr-6 w-full lg:w-1/2" label="Country">
-            <option :value="null" />
+            <option value=""></option>
             <option value="CA">Canada</option>
             <option value="US">United States</option>
           </select-input>

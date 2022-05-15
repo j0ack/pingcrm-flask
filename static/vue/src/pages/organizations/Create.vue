@@ -13,11 +13,11 @@
         <text-input v-model="form.city" :error="form.errors.city" class="pr-6 pb-8 w-full lg:w-1/2" label="City" />
         <text-input v-model="form.region" :error="form.errors.region" class="pr-6 pb-8 w-full lg:w-1/2" label="Province/State" />
         <select-input v-model="form.country" :error="form.errors.country" class="pr-6 pb-8 w-full lg:w-1/2" label="Country">
-          <option :value="null" />
+          <option value=""></option>
           <option value="CA">Canada</option>
           <option value="US">United States</option>
         </select-input>
-        <text-input :value ="form.postal_code" :error="form.errors.postal_code" class="pr-6 pb-8 w-full lg:w-1/2" label="Postal code" />
+        <text-input v-model ="form.postal_code" :error="form.errors.postal_code" class="pr-6 pb-8 w-full lg:w-1/2" label="Postal code" />
       </div>
       <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center">
         <loading-button :loading="form.processing" class="btn-indigo" type="submit">Create Organization</loading-button>
@@ -46,14 +46,14 @@ export default defineComponent({
   data() {
     return {
       form: useForm({
-        name: null,
-        email: null,
-        phone: null,
-        address: null,
-        city: null,
-        region: null,
-        country: null,
-        postal_code: null,
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        region: '',
+        country: '',
+        postal_code: '',
       }),
     }
   },
