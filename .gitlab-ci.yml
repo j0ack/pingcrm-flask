@@ -8,7 +8,4 @@ unit_tests_python:
   before_script:
     - pip install -U -r requirements.txt
   script:
-    - pip install -U coverage beautifulsoup4
-    - coverage run --source=app -m unittest discover tests/backend
-  after_script:
-    - coverage report -m --fail-under=90
+    - make test-python
