@@ -1,6 +1,5 @@
 """Ping CRM user model."""
 
-from typing import Any, Dict
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -30,14 +29,3 @@ class User(UserMixin, BaseModel):
 
     def check_password(self, pwd: str) -> bool:
         return check_password_hash(self.password, pwd)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": self.id,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "email": self.email,
-            "photo_path": self.photo_path,
-            "owner": self.owner,
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else "",
-        }

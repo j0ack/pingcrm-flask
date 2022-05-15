@@ -16,7 +16,7 @@
           <text-input v-model="form.city" :error="form.errors.city" class="pb-8 pr-6 w-full lg:w-1/2" label="City" />
           <text-input v-model="form.region" :error="form.errors.region" class="pb-8 pr-6 w-full lg:w-1/2" label="Province/State" />
           <select-input v-model="form.country" :error="form.errors.country" class="pb-8 pr-6 w-full lg:w-1/2" label="Country">
-            <option :value="null" />
+            <option value=""></option>
             <option value="CA">Canada</option>
             <option value="US">United States</option>
             <option value="France">France</option>
@@ -104,7 +104,7 @@ export default defineComponent({
         address: this.organization.address,
         city: this.organization.city,
         region: this.organization.region,
-        country: this.organization.country,
+        country: this.organization.country || '',
         postal_code: this.organization.postal_code
       })
     }

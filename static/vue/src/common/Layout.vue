@@ -37,7 +37,7 @@
                   </Link>
                   <Link
                     class="block px-6 py-2 hover:bg-indigo-500 hover:text-white w-full text-left"
-                    :href="$route('auth.logout')"
+                    @click="logout"
                   >
                     Logout
                   </Link>
@@ -77,5 +77,11 @@ export default defineComponent({
     Logo,
     MainMenu,
   },
+  methods: {
+    logout() {
+      const route = this.$route('auth.logout')
+      this.$inertia.post(route)
+    }
+  }
 })
 </script>

@@ -21,3 +21,7 @@ dev-vue:
 	@npm run --prefix static/vue/ build:dev
 
 dev: dev-python dev-vue
+
+test-python:
+	coverage run --source app --omit=app/dev.py -m unittest discover tests
+	coverage report -m --fail-under=90

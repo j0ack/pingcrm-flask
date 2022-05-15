@@ -1,6 +1,5 @@
 """Ping CRM contact model."""
 
-from typing import Any, Dict
 
 from app import db
 from app.models import BaseModel
@@ -34,22 +33,3 @@ class Contact(BaseModel):
     @property
     def name(self) -> str:
         return f"{self.last_name} {self.first_name}"
-
-    def to_dict(self) -> Dict[str, Any]:
-        """JSON representation."""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "organization_id": self.organization.id,
-            "organization": {"name": self.organization.name},
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "email": self.email,
-            "phone": self.phone,
-            "address": self.address,
-            "city": self.city,
-            "region": self.region,
-            "country": self.country,
-            "postal_code": self.postal_code,
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else "",
-        }

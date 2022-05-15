@@ -4,6 +4,8 @@ from typing import Any, Dict, Tuple
 
 from flask import request, url_for
 
+from app import ma
+
 
 def get_search_filters() -> Tuple[int, str, str]:
     """Get search filters from request."""
@@ -20,11 +22,12 @@ def build_search_data(
     url_name: str,
     search_filter: str,
     trash_filter: str,
+    schema: ma.Schema,
 ) -> Dict[str, Any]:
     """Build returned data for a search from query."""
     return {
         key: {
-            "data": [item.to_dict() for item in query.items],
+            "data": schema.dump([item for item in query.items]),
             "links": [
                 {"url": url_for(url_name, page=page), "label": page}
                 for page in range(1, query.pages + 1)
